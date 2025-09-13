@@ -2,6 +2,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import extract, and_, or_, select
 from datetime import date, timedelta
 from src.db.models import User
+from src.schemas.auth import UserCreate
+import bcrypt
+
+
+def hash_password(password: str) -> str:
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+    return hashed.decode("utf-8")
 
 
 class UserRepository:
@@ -21,11 +29,13 @@ class UserRepository:
         result = await self.db.execute(select(User).filter(User.email == email))
         return result.scalar_one_or_none()
 
-    async def create(self, user: User):
-        self.db.add(user)
+    async def create(self, body: UserCreate, hashed_password: str, avatar: str = None):
+        print(body)
+        new_user = User(**body, hashed_password=hashed_password, avatar=avatar)
+        self.db.add(new_user)
         await self.db.commit()
-        await self.db.refresh(user)
-        return user
+        await self.db.refresh(new_user)
+        return new_user
 
     async def update(self, existing_user: User, data: dict):
         for field, value in data.items():

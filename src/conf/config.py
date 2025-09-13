@@ -13,6 +13,9 @@ class Config:
     DB_URL = (
         f"postgresql+asyncpg://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
     )
+    JWT_SECRET = "your_secret_key"
+    JWT_ALGORITHM = "HS256"
+    JWT_EXPIRATION_SECONDS = 3600
 
 
 config = Config()

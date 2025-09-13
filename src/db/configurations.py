@@ -31,6 +31,7 @@ class DatabaseSessionManager:
             await session.close()
 
 
+print(f"debug: {config.DB_URL}")
 sessionmanager = DatabaseSessionManager(config.DB_URL)
 
 

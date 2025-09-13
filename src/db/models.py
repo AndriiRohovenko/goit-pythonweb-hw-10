@@ -1,10 +1,65 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, Date, String
-from datetime import date
+from sqlalchemy import (
+    ForeignKey,
+    PrimaryKeyConstraint,
+    UniqueConstraint,
+    Date,
+    String,
+    Column,
+    Integer,
+    String,
+    Boolean,
+    func,
+    Table,
+)
+from datetime import date, datetime
+from typing import Optional
+from sqlalchemy.sql.sqltypes import DateTime
 
 
 class Base(DeclarativeBase):
     pass
+
+
+note_m2m_tag = Table(
+    "note_m2m_tag",
+    Base.metadata,
+    Column("note_id", Integer, ForeignKey("notes.id", ondelete="CASCADE")),
+    Column("tag_id", Integer, ForeignKey("tags.id", ondelete="CASCADE")),
+    PrimaryKeyConstraint("note_id", "tag_id"),
+)
+
+
+class Note(Base):
+    __tablename__ = "notes"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    title: Mapped[str] = mapped_column(String(50), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        "created_at", DateTime, default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        "updated_at", DateTime, default=func.now(), onupdate=func.now()
+    )
+    description: Mapped[str] = mapped_column(String(150), nullable=False)
+    done: Mapped[bool] = mapped_column(Boolean, default=False)
+    tags: Mapped[list["Tag"]] = relationship(
+        "Tag", secondary=note_m2m_tag, backref="notes"
+    )
+    user_id = Column(
+        "user_id", ForeignKey("users.id", ondelete="CASCADE"), default=None
+    )
+    user = relationship("User", backref="notes")
+
+
+class Tag(Base):
+    __tablename__ = "tags"
+    __table_args__ = (UniqueConstraint("name", "user_id", name="unique_tag_user"),)
+    id: Mapped[int] = Column(Integer, primary_key=True)
+    name: Mapped[str] = Column(String(25), nullable=False)
+    user_id = Column(
+        "user_id", ForeignKey("users.id", ondelete="CASCADE"), default=None
+    )
+    user = relationship("User", backref="tags")
 
 
 class User(Base):
@@ -14,5 +69,9 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     surname: Mapped[str] = mapped_column(String(50), nullable=False)
     email: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
-    birthdate: Mapped[date] = mapped_column(Date, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    birthdate: Mapped[date | None] = mapped_column(Date, nullable=False)
     additional_info: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at = Column(DateTime, default=func.now())
+    avatar = Column(String(255), nullable=True)
+    refresh_token: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)

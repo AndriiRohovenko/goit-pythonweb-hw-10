@@ -5,6 +5,7 @@ from sqlalchemy import text
 
 from src.api.users import router as users_router
 from src.api.utils import router as utils_router
+from src.api.auth import router as auth_router
 
 from src.api.exceptions import (
     UserNotFoundError,
@@ -35,3 +36,4 @@ app.add_exception_handler(ServerError, server_error_handler)
 
 app.include_router(users_router, prefix="/api")
 app.include_router(utils_router, prefix="/api")
+app.include_router(auth_router, prefix="/api")

@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
+import bcrypt
 
 from src.db.configurations import get_db_session
+
 
 router = APIRouter(tags=["utils"])
 
@@ -26,3 +28,9 @@ async def healthchecker(db: AsyncSession = Depends(get_db_session)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error connecting to the database",
         )
+
+
+def hash_password(password: str) -> str:
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+    return hashed.decode("utf-8")

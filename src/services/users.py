@@ -1,6 +1,10 @@
 from src.repository.users import UserRepository
 from src.db.models import User
 from src.api.exceptions import UserNotFoundError, DuplicateEmailError, ServerError
+from src.schemas.auth import UserCreate
+
+
+from libgravatar import Gravatar
 
 
 class UserService:
@@ -24,12 +28,23 @@ class UserService:
         except Exception as e:
             raise ServerError(str(e))
 
-    async def create_user(self, data):
+    async def create_user(self, data: UserCreate):
         if await self.repo.get_by_email(data.email):
             raise DuplicateEmailError
         try:
-            new_user = User(**data.dict())
-            return await self.repo.create(new_user)
+            from src.api.utils import hash_password
+
+            g = Gravatar(data.email)
+            avatar = g.get_image()
+            hashed_password = hash_password(data.password)
+
+            user_data = data.model_dump(exclude={"password"})
+            print(user_data)
+            print("Type of data passed to repo.create:", type(data))
+
+            return await self.repo.create(
+                user_data, hashed_password=hashed_password, avatar=avatar
+            )
         except Exception as e:
             raise ServerError(str(e))
 
@@ -62,5 +77,11 @@ class UserService:
     async def upcoming_birthdays(self):
         try:
             return await self.repo.upcoming_birthdays()
+        except Exception as e:
+            raise ServerError(str(e))
+
+    async def get_user_by_email(self, email: str):
+        try:
+            return await self.repo.get_by_email(email)
         except Exception as e:
             raise ServerError(str(e))
