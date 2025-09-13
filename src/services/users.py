@@ -32,19 +32,11 @@ class UserService:
         if await self.repo.get_by_email(data.email):
             raise DuplicateEmailError
         try:
-            from src.api.utils import hash_password
 
             g = Gravatar(data.email)
             avatar = g.get_image()
-            hashed_password = hash_password(data.password)
 
-            user_data = data.model_dump(exclude={"password"})
-            print(user_data)
-            print("Type of data passed to repo.create:", type(data))
-
-            return await self.repo.create(
-                user_data, hashed_password=hashed_password, avatar=avatar
-            )
+            return await self.repo.create(data, avatar=avatar)
         except Exception as e:
             raise ServerError(str(e))
 

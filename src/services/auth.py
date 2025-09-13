@@ -10,6 +10,9 @@ from jose import JWTError, jwt
 from src.db.configurations import get_db_session
 from src.conf.config import config
 from src.services.users import UserService
+from src.repository.users import UserRepository
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class Hash:
@@ -40,7 +43,7 @@ async def create_access_token(data: dict, expires_delta: Optional[int] = None):
 
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db_session)
+    token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db_session)
 ):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -58,8 +61,9 @@ async def get_current_user(
             raise credentials_exception
     except JWTError as e:
         raise credentials_exception
-    user_service = UserService(db)
-    user = await user_service.get_user_by_username(username)
+    user_repo = UserRepository(db)
+    user_service = UserService(user_repo)
+    user = await user_service.get_user_by_email(username)
     if user is None:
         raise credentials_exception
     return user

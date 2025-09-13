@@ -29,9 +29,13 @@ class UserRepository:
         result = await self.db.execute(select(User).filter(User.email == email))
         return result.scalar_one_or_none()
 
-    async def create(self, body: UserCreate, hashed_password: str, avatar: str = None):
-        print(body)
-        new_user = User(**body, hashed_password=hashed_password, avatar=avatar)
+    async def create(self, body: UserCreate, avatar: str = None):
+        from src.api.utils import hash_password
+
+        hashed_password = hash_password(body.password)
+        user_data = body.model_dump(exclude={"password"})
+
+        new_user = User(**user_data, hashed_password=hashed_password, avatar=avatar)
         self.db.add(new_user)
         await self.db.commit()
         await self.db.refresh(new_user)
