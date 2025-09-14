@@ -8,7 +8,6 @@ class User(BaseModel):
     name: str
     surname: str
     email: str
-    avatar: str
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -18,7 +17,6 @@ class UserCreate(BaseModel):
     surname: str
     email: str
     password: str
-    birthdate: Optional[date] = None
 
 
 class Token(BaseModel):

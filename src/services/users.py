@@ -30,32 +30,12 @@ class UserService:
         result = await self.repo.get_user_by_refresh_token(refresh_token)
         return result
 
-    async def get_users(self, limit: int, skip: int):
-        try:
-            return await self.repo.get_all(limit=limit, skip=skip)
-        except Exception as e:
-            raise ServerError(str(e))
-
-    async def get_user(self, user: User):
-        try:
-            user = await self.repo.get_by_id(user.id)
-            if user is None:
-                raise UserNotFoundError
-            return user
-        except UserNotFoundError:
-            raise
-        except Exception as e:
-            raise ServerError(str(e))
-
     async def create_user(self, data: UserCreate):
         if await self.repo.get_by_email(data.email):
             raise DuplicateEmailError
         try:
 
-            g = Gravatar(data.email)
-            avatar = g.get_image()
-
-            return await self.repo.create(data, avatar=avatar)
+            return await self.repo.create(data)
         except Exception as e:
             raise ServerError(str(e))
 
@@ -76,18 +56,6 @@ class UserService:
             raise UserNotFoundError
         try:
             await self.repo.delete(existing)
-        except Exception as e:
-            raise ServerError(str(e))
-
-    async def search_users(self, name, surname, email):
-        try:
-            return await self.repo.search(name, surname, email)
-        except Exception as e:
-            raise ServerError(str(e))
-
-    async def upcoming_birthdays(self):
-        try:
-            return await self.repo.upcoming_birthdays()
         except Exception as e:
             raise ServerError(str(e))
 
