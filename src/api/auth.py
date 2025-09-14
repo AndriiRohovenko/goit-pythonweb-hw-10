@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.services.auth import create_access_token, Hash
+from src.services.auth import create_access_token, Hash, get_current_user
 from src.services.users import UserService
 from src.repository.users import UserRepository
 from src.db.configurations import get_db_session as get_db
-from src.schemas.auth import UserCreate, Token, User
+from src.schemas.auth import UserCreate, Token, User, RefreshTokenRequest
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -47,9 +47,40 @@ async def login_user(
         data={"sub": user.email}, expires_delta=7 * 24 * 3600
     )  # 7 days
     # save refresh_token in DB for user
-    await user_service.update_refresh_token(user.id, refresh_token)
+    await user_service.update_refresh_token(user, refresh_token)
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
+        "token_type": "bearer",
+    }
+
+
+@router.post("/refresh", response_model=Token)
+async def refresh_token(
+    body: RefreshTokenRequest,
+    user_service: UserService = Depends(user_service),
+):
+    print(body.refresh_token)
+    if body.refresh_token is None:
+        raise HTTPException(status_code=400, detail="Refresh token is required")
+    user = await user_service.get_user_by_refresh_token(body.refresh_token)
+    print(user)
+
+    if not user or user is None:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+    db_refresh_token = await user_service.get_refresh_token(user)
+    print(db_refresh_token)
+    if db_refresh_token != body.refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    access_token = await create_access_token(data={"sub": user.email})
+    return {
+        "access_token": access_token,
+        "refresh_token": db_refresh_token,
         "token_type": "bearer",
     }

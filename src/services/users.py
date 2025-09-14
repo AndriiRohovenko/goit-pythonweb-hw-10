@@ -11,8 +11,14 @@ class UserService:
     def __init__(self, repo: UserRepository):
         self.repo = repo
 
-    async def update_refresh_token(self, user_id: int, refresh_token: str):
-        user = await self.repo.get_by_id(user_id)
+    async def get_refresh_token(self, user: User):
+        user = await self.repo.get_by_id(user.id)
+        if not user:
+            raise UserNotFoundError
+        return user.refresh_token
+
+    async def update_refresh_token(self, user: User, refresh_token: str):
+        user = await self.repo.get_by_id(user.id)
         if not user:
             raise UserNotFoundError
         try:
@@ -20,15 +26,19 @@ class UserService:
         except Exception as e:
             raise ServerError(str(e))
 
+    async def get_user_by_refresh_token(self, refresh_token: str):
+        result = await self.repo.get_user_by_refresh_token(refresh_token)
+        return result
+
     async def get_users(self, limit: int, skip: int):
         try:
             return await self.repo.get_all(limit=limit, skip=skip)
         except Exception as e:
             raise ServerError(str(e))
 
-    async def get_user(self, user_id: int):
+    async def get_user(self, user: User):
         try:
-            user = await self.repo.get_by_id(user_id)
+            user = await self.repo.get_by_id(user.id)
             if user is None:
                 raise UserNotFoundError
             return user
@@ -49,8 +59,8 @@ class UserService:
         except Exception as e:
             raise ServerError(str(e))
 
-    async def update_user(self, user_id: int, data):
-        existing = await self.repo.get_by_id(user_id)
+    async def update_user(self, user: User, data):
+        existing = await self.repo.get_by_id(user.id)
         if not existing:
             raise UserNotFoundError
         if await self.repo.get_by_email(data.email) and existing.email != data.email:
@@ -60,8 +70,8 @@ class UserService:
         except Exception as e:
             raise ServerError(str(e))
 
-    async def delete_user(self, user_id: int):
-        existing = await self.repo.get_by_id(user_id)
+    async def delete_user(self, user: User):
+        existing = await self.repo.get_by_id(user.id)
         if not existing:
             raise UserNotFoundError
         try:

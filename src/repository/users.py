@@ -17,6 +17,12 @@ class UserRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
+    async def get_user_by_refresh_token(self, refresh_token: str):
+        result = await self.db.execute(
+            select(User).filter(User.refresh_token == refresh_token)
+        )
+        return result.scalar_one_or_none()
+
     async def get_all(self, limit: int, skip: int):
         result = await self.db.execute(select(User).offset(skip).limit(limit))
         return result.scalars().all()
