@@ -3,6 +3,7 @@ from src.db.models import Contacts
 from src.api.exceptions import UserNotFoundError, DuplicateEmailError, ServerError
 
 from libgravatar import Gravatar
+from src.db.models import User
 
 
 class ContactService:
@@ -10,15 +11,15 @@ class ContactService:
     def __init__(self, repo: ContactsRepository):
         self.repo = repo
 
-    async def get_contacts(self, user_id: int, limit: int, skip: int):
+    async def get_contacts(self, user: User, limit: int, skip: int):
         try:
-            return await self.repo.get_all(user_id=user_id, limit=limit, skip=skip)
+            return await self.repo.get_all(user=user, limit=limit, skip=skip)
         except Exception as e:
             raise ServerError(str(e))
 
-    async def get_contact(self, contact_id: int, user_id: int):
+    async def get_contact(self, contact_id: int, user: User):
         try:
-            contact = await self.repo.get_by_id(contact_id=contact_id, user_id=user_id)
+            contact = await self.repo.get_by_id(contact_id=contact_id, user=user)
             if contact is None:
                 raise UserNotFoundError
             return contact
@@ -27,23 +28,23 @@ class ContactService:
         except Exception as e:
             raise ServerError(str(e))
 
-    async def create_contact(self, data: Contacts, user_id: int):
-        if await self.repo.get_by_email(email=data.email, user_id=user_id):
+    async def create_contact(self, data: Contacts, user: User):
+        if await self.repo.get_by_email(email=data.email, user=user):
             raise DuplicateEmailError
         try:
             g = Gravatar(data.email)
             avatar = g.get_image()
 
-            return await self.repo.create(data, user_id=user_id, avatar=avatar)
+            return await self.repo.create(data, user=user, avatar=avatar)
         except Exception as e:
             raise ServerError(str(e))
 
-    async def update_contact(self, contact_id: int, data: Contacts, user_id: int):
-        existing = await self.repo.get_by_id(contact_id=contact_id, user_id=user_id)
+    async def update_contact(self, contact_id: int, data: Contacts, user: User):
+        existing = await self.repo.get_by_id(contact_id=contact_id, user=user)
         if not existing:
             raise UserNotFoundError
         if (
-            await self.repo.get_by_email(email=data.email, user_id=user_id)
+            await self.repo.get_by_email(email=data.email, user=user)
             and existing.email != data.email
         ):
             raise DuplicateEmailError
@@ -52,8 +53,8 @@ class ContactService:
         except Exception as e:
             raise ServerError(str(e))
 
-    async def delete_contact(self, contact_id: int, user_id: int):
-        existing = await self.repo.get_by_id(contact_id=contact_id, user_id=user_id)
+    async def delete_contact(self, contact_id: int, user: User):
+        existing = await self.repo.get_by_id(contact_id=contact_id, user=user)
         if not existing:
             raise UserNotFoundError
         try:
@@ -66,15 +67,15 @@ class ContactService:
         name: str | None,
         email: str | None,
         phone: str | None,
-        user_id: int,
+        user: User,
     ):
         try:
-            return await self.repo.search(name, email, phone, user_id=user_id)
+            return await self.repo.search(name, email, phone, user=user)
         except Exception as e:
             raise ServerError(str(e))
 
-    async def upcoming_birthdays(self, days: int, user_id: int):
+    async def upcoming_birthdays(self, days: int, user: User):
         try:
-            return await self.repo.upcoming_birthdays(days, user_id=user_id)
+            return await self.repo.upcoming_birthdays(days, user=user)
         except Exception as e:
             raise ServerError(str(e))

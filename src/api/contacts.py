@@ -27,7 +27,7 @@ async def get_contacts(
     service: ContactService = Depends(contact_service),
     current_user=Depends(get_current_user),
 ):
-    return await service.get_contacts(user_id=current_user.id, skip=skip, limit=limit)
+    return await service.get_contacts(user=current_user, skip=skip, limit=limit)
 
 
 @router.post(
@@ -39,7 +39,7 @@ async def create_contact(
     service: ContactService = Depends(contact_service),
     current_user=Depends(get_current_user),
 ):
-    return await service.create_contact(contact, user_id=current_user.id)
+    return await service.create_contact(contact, user=current_user)
 
 
 @router.get(
@@ -51,7 +51,7 @@ async def get_contact(
     service: ContactService = Depends(contact_service),
     current_user=Depends(get_current_user),
 ):
-    return await service.get_contact(contact_id, user_id=current_user.id)
+    return await service.get_contact(contact_id, user=current_user)
 
 
 @router.patch(
@@ -64,7 +64,7 @@ async def update_contact(
     service: ContactService = Depends(contact_service),
     current_user=Depends(get_current_user),
 ):
-    return await service.update_contact(contact_id, contact, user_id=current_user.id)
+    return await service.update_contact(contact_id, contact, user=current_user)
 
 
 @router.delete(
@@ -76,7 +76,7 @@ async def delete_contact(
     service: ContactService = Depends(contact_service),
     current_user=Depends(get_current_user),
 ):
-    await service.delete_contact(contact_id, user_id=current_user.id)
+    await service.delete_contact(contact_id, user=current_user)
 
 
 @router.get(
@@ -90,7 +90,7 @@ async def search_contacts(
     service: ContactService = Depends(contact_service),
     current_user=Depends(get_current_user),
 ):
-    return await service.search_contacts(name, email, phone, user_id=current_user.id)
+    return await service.search_contacts(name, email, phone, user=current_user)
 
 
 @router.get(
@@ -101,4 +101,4 @@ async def get_upcoming_birthdays(
     service: ContactService = Depends(contact_service),
     current_user=Depends(get_current_user),
 ):
-    return await service.upcoming_birthdays(days=7, user_id=current_user.id)
+    return await service.upcoming_birthdays(days=7, user=current_user)

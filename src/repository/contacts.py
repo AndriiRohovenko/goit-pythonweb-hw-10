@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import extract, and_, or_, select
 from datetime import date, timedelta
-from src.db.models import Contacts
+from src.db.models import Contacts, User
 
 
 class ContactsRepository:
@@ -9,33 +9,33 @@ class ContactsRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_all(self, limit: int, skip: int, user_id: int):
+    async def get_all(self, limit: int, skip: int, user: User):
         result = await self.db.execute(
             select(Contacts)
-            .filter(Contacts.user_id == user_id)
+            .filter(Contacts.user_id == user.id)
             .offset(skip)
             .limit(limit)
         )
         return result.scalars().all()
 
-    async def get_by_id(self, contact_id: int, user_id: int):
+    async def get_by_id(self, contact_id: int, user: User):
         result = await self.db.execute(
             select(Contacts).filter(
-                Contacts.id == contact_id, Contacts.user_id == user_id
+                Contacts.id == contact_id, Contacts.user_id == user.id
             )
         )
         return result.scalar_one_or_none()
 
-    async def get_by_email(self, email: str, user_id: int):
+    async def get_by_email(self, email: str, user: User):
         result = await self.db.execute(
             select(Contacts).filter(
-                Contacts.email == email, Contacts.user_id == user_id
+                Contacts.email == email, Contacts.user_id == user.id
             )
         )
         return result.scalar_one_or_none()
 
-    async def create(self, body: Contacts, user_id: int, avatar: str = None):
-        new_contact = Contacts(**body.model_dump(), user_id=user_id, avatar=avatar)
+    async def create(self, body: Contacts, user: User, avatar: str = None):
+        new_contact = Contacts(**body.model_dump(), user_id=user.id, avatar=avatar)
         self.db.add(new_contact)
         await self.db.commit()
         await self.db.refresh(new_contact)
@@ -57,9 +57,9 @@ class ContactsRepository:
         name: str | None,
         email: str | None,
         phone: str | None,
-        user_id: int,
+        user: User,
     ):
-        query = select(Contacts).filter(Contacts.user_id == user_id)
+        query = select(Contacts).filter(Contacts.user_id == user.id)
 
         if name:
             query = query.where(Contacts.name.ilike(f"%{name}%"))
@@ -71,13 +71,13 @@ class ContactsRepository:
         result = await self.db.execute(query)
         return result.scalars().all()
 
-    async def upcoming_birthdays(self, days: int, user_id: int):
+    async def upcoming_birthdays(self, days: int, user: User):
         today = date.today()
         upcoming = today + timedelta(days=days)
 
         query = (
             select(Contacts)
-            .filter(Contacts.user_id == user_id)
+            .filter(Contacts.user_id == user.id)
             .where(
                 or_(
                     and_(
