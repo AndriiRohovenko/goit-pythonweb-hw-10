@@ -7,6 +7,7 @@ from src.api.users import router as users_router
 from src.api.utils import router as utils_router
 from src.api.auth import router as auth_router
 
+
 from src.api.exceptions import (
     UserNotFoundError,
     DuplicateEmailError,

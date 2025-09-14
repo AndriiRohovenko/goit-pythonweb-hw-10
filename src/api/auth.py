@@ -16,7 +16,6 @@ async def user_service(db: AsyncSession = Depends(get_db)):
     return UserService(repo)
 
 
-# Реєстрація користувача
 @router.post("/signup", response_model=User, status_code=status.HTTP_201_CREATED)
 async def register_user(
     user_data: UserCreate, user_service: UserService = Depends(user_service)
@@ -30,7 +29,6 @@ async def register_user(
     return await user_service.create_user(user_data)
 
 
-# Логін користувача
 @router.post("/login", response_model=Token)
 async def login_user(
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -45,4 +43,13 @@ async def login_user(
         )
 
     access_token = await create_access_token(data={"sub": user.email})
-    return {"access_token": access_token, "token_type": "bearer"}
+    refresh_token = await create_access_token(
+        data={"sub": user.email}, expires_delta=7 * 24 * 3600
+    )  # 7 days
+    # save refresh_token in DB for user
+    await user_service.update_refresh_token(user.id, refresh_token)
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+    }

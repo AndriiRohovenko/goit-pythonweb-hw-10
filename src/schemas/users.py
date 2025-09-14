@@ -22,3 +22,8 @@ class UserSchema(BaseModel):
     additional_info: Optional[str] = Field(
         None, max_length=255, description="Additional information about the user"
     )
+
+    # Allow creating this schema from SQLAlchemy model instances
+    model_config = {
+        "from_attributes": True,
+    }

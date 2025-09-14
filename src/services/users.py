@@ -11,6 +11,15 @@ class UserService:
     def __init__(self, repo: UserRepository):
         self.repo = repo
 
+    async def update_refresh_token(self, user_id: int, refresh_token: str):
+        user = await self.repo.get_by_id(user_id)
+        if not user:
+            raise UserNotFoundError
+        try:
+            return await self.repo.update(user, {"refresh_token": refresh_token})
+        except Exception as e:
+            raise ServerError(str(e))
+
     async def get_users(self, limit: int, skip: int):
         try:
             return await self.repo.get_all(limit=limit, skip=skip)
