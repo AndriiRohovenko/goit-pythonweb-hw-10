@@ -26,7 +26,10 @@ async def register_user(
             status_code=status.HTTP_409_CONFLICT,
             detail="User with this email already exists",
         )
-    return await user_service.create_user(user_data)
+    access_token = await create_access_token(
+        data={"sub": user_data.email}, expires_delta=24 * 3600
+    )
+    return await user_service.create_user(user_data, access_token=access_token)
 
 
 @router.post("/login", response_model=Token)
@@ -84,3 +87,16 @@ async def refresh_token(
         "refresh_token": db_refresh_token,
         "token_type": "bearer",
     }
+
+
+@router.get("/verify-email", status_code=status.HTTP_200_OK)
+async def verify_email(token: str, user_service: UserService = Depends(user_service)):
+    print(token)
+    user = await user_service.get_user_by_email_verification_token(token)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+
+    await user_service.verify_email(user)
+    return {"detail": "Email verified successfully"}

@@ -2,9 +2,16 @@ from src.repository.users import UserRepository
 from src.db.models import User
 from src.api.exceptions import UserNotFoundError, DuplicateEmailError, ServerError
 from src.schemas.auth import UserCreate
-
+from src.services.email import send_verification_email
 
 from libgravatar import Gravatar
+from jose import JWTError, jwt
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
 
 
 class UserService:
@@ -30,11 +37,17 @@ class UserService:
         result = await self.repo.get_user_by_refresh_token(refresh_token)
         return result
 
-    async def create_user(self, data: UserCreate):
+    async def get_user_by_email_verification_token(self, token: str):
+        email = jwt.decode(token, key=SECRET_KEY, algorithms=[ALGORITHM]).get("sub")
+        result = await self.repo.get_by_email(email)
+        return result
+
+    async def create_user(self, data: UserCreate, access_token: str = None):
         if await self.repo.get_by_email(data.email):
             raise DuplicateEmailError
         try:
-
+            if access_token:
+                send_verification_email(data.email, access_token)
             return await self.repo.create(data)
         except Exception as e:
             raise ServerError(str(e))
@@ -62,5 +75,14 @@ class UserService:
     async def get_user_by_email(self, email: str):
         try:
             return await self.repo.get_by_email(email)
+        except Exception as e:
+            raise ServerError(str(e))
+
+    async def verify_email(self, user: User):
+        existing = await self.repo.get_by_id(user.id)
+        if not existing:
+            raise UserNotFoundError
+        try:
+            return await self.repo.update(existing, {"is_verified": True})
         except Exception as e:
             raise ServerError(str(e))
