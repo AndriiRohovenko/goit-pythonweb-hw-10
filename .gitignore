@@ -14,7 +14,8 @@ dist/
 poetry.lock
 
 # Virtual environments
-# .env
+.env
+.env.dev
 .venv
 venv/
 ENV/

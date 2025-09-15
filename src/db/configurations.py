@@ -31,8 +31,8 @@ class DatabaseSessionManager:
             await session.close()
 
 
-print(f"debug: {config.DB_URL}")
-sessionmanager = DatabaseSessionManager(config.DB_URL)
+print(f"debug: {config.db_url()}")
+sessionmanager = DatabaseSessionManager(config.db_url())
 
 
 async def get_db_session():
