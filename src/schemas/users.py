@@ -16,9 +16,8 @@ class UserSchema(BaseModel):
         description="User's email address",
         example="john.doe@example.com",
     )
-    birthdate: date = Field(
-        ..., description="User's birthdate in YYYY-MM-DD format", example="1990-01-01"
-    )
-    additional_info: Optional[str] = Field(
-        None, max_length=255, description="Additional information about the user"
-    )
+
+    # Allow creating this schema from SQLAlchemy model instances
+    model_config = {
+        "from_attributes": True,
+    }
