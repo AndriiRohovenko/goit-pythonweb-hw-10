@@ -1,14 +1,13 @@
 import smtplib
 from email.mime.text import MIMEText
-from dotenv import load_dotenv
-import os
+from src.conf.config import config
 
-load_dotenv()
-API_URL = os.getenv("API_URL")
-SMTP_HOST = os.getenv("SMTP_HOST")
-SMTP_PORT = os.getenv("SMTP_PORT")
-SMTP_USER = os.getenv("SMTP_USER")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+
+API_URL = config.API_URL
+SMTP_HOST = config.SMTP_HOST
+SMTP_PORT = config.SMTP_PORT
+SMTP_USER = config.SMTP_USER
+SMTP_PASSWORD = config.SMTP_PASSWORD
 
 
 def send_verification_email(to_email: str, token: str):

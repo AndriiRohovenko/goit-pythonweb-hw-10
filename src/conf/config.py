@@ -13,7 +13,7 @@ class BaseConfig(BaseSettings):
 
     JWT_SECRET: str
     JWT_ALGORITHM: str
-    JWT_EXPIRATION_SECONDS: int = 3600
+    JWT_EXPIRATION_SECONDS: int
 
     API_HOST: str
     API_PORT: int

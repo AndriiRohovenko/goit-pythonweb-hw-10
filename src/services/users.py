@@ -7,11 +7,11 @@ from src.services.email import send_verification_email
 from libgravatar import Gravatar
 from jose import JWTError, jwt
 from dotenv import load_dotenv
-import os
 
-load_dotenv()
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
+from src.conf.config import config
+
+SECRET_KEY = config.JWT_SECRET
+ALGORITHM = config.JWT_ALGORITHM
 
 
 class UserService:
