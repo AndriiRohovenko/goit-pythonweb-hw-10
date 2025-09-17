@@ -1,32 +1,39 @@
-import smtplib
-from email.mime.text import MIMEText
-from dotenv import load_dotenv
-import os
+from pathlib import Path
 
-load_dotenv()
-API_URL = os.getenv("API_URL")
-SMTP_HOST = os.getenv("SMTP_HOST")
-SMTP_PORT = os.getenv("SMTP_PORT")
-SMTP_USER = os.getenv("SMTP_USER")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
+from fastapi_mail.errors import ConnectionErrors
+from pydantic import EmailStr
+from src.conf.config import config
+
+conf = ConnectionConfig(
+    MAIL_USERNAME=config.SMTP_USER,
+    MAIL_PASSWORD=config.SMTP_PASSWORD,
+    MAIL_FROM=config.SMTP_FROM,
+    MAIL_PORT=config.SMTP_PORT,
+    MAIL_SERVER=config.SMTP_HOST,
+    TEMPLATE_FOLDER=Path(__file__).parent.parent / "templates",
+    VALIDATE_CERTS=True,
+    USE_CREDENTIALS=True,
+    MAIL_SSL_TLS=True,
+    MAIL_STARTTLS=False,
+    MAIL_FROM_NAME="REST API Service",
+)
 
 
-def send_verification_email(to_email: str, token: str):
-    verification_link = f"{API_URL}/auth/verify-email?token={token}"
-    subject = "Verify your email"
-    body = f"Please click the link to verify your email: {verification_link}"
-
-    msg = MIMEText(body)
-    msg["Subject"] = subject
-    msg["From"] = "myApi_noReply@gmail.com"
-    msg["To"] = to_email
-
-    smtp_server = SMTP_HOST
-    smtp_port = SMTP_PORT
-    smtp_user = SMTP_USER
-    smtp_password = SMTP_PASSWORD
-
-    with smtplib.SMTP(smtp_server, smtp_port) as server:
-        server.starttls()
-        server.login(smtp_user, smtp_password)
-        server.sendmail(smtp_user, to_email, msg.as_string())
+async def send_verification_email(email: EmailStr, access_token: str, user_info: dict):
+    print(f"Sending verification email to {email}")
+    fullname = f"{user_info.name} {user_info.surname}"
+    message = MessageSchema(
+        subject="Verify your email",
+        recipients=[email],
+        template_body={
+            "fullname": fullname,
+            "verification_link": f"{config.API_URL}/auth/verify-email?token={access_token}",
+        },
+        subtype=MessageType.html,
+    )
+    fm = FastMail(conf)
+    try:
+        await fm.send_message(message, template_name="email_verification.html")
+    except ConnectionErrors as e:
+        print(f"Failed to send email: {e}")

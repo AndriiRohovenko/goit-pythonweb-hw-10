@@ -19,6 +19,6 @@ async def user_service(db: AsyncSession = Depends(get_db_session)):
 
 
 @router.get("/me", response_model=User)
-@limiter.limit("5/minute")  # Example: 5 requests per minute per IP
+@limiter.limit("5/minute")
 async def me(request: Request, user: User = Depends(get_current_user)):
     return user

@@ -2,16 +2,14 @@ from src.repository.users import UserRepository
 from src.db.models import User
 from src.api.exceptions import UserNotFoundError, DuplicateEmailError, ServerError
 from src.schemas.auth import UserCreate
-from src.services.email import send_verification_email
 
 from libgravatar import Gravatar
 from jose import JWTError, jwt
-from dotenv import load_dotenv
-import os
 
-load_dotenv()
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
+from src.conf.config import config
+
+SECRET_KEY = config.JWT_SECRET
+ALGORITHM = config.JWT_ALGORITHM
 
 
 class UserService:
@@ -42,12 +40,10 @@ class UserService:
         result = await self.repo.get_by_email(email)
         return result
 
-    async def create_user(self, data: UserCreate, access_token: str = None):
+    async def create_user(self, data: UserCreate):
         if await self.repo.get_by_email(data.email):
             raise DuplicateEmailError
         try:
-            if access_token:
-                send_verification_email(data.email, access_token)
             return await self.repo.create(data)
         except Exception as e:
             raise ServerError(str(e))
@@ -83,6 +79,6 @@ class UserService:
         if not existing:
             raise UserNotFoundError
         try:
-            return await self.repo.update(existing, {"is_verified": True})
+            return await self.repo.confirm_email(existing)
         except Exception as e:
             raise ServerError(str(e))
