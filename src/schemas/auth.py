@@ -1,6 +1,4 @@
 from pydantic import BaseModel, Field, EmailStr, ConfigDict
-from datetime import date
-from typing import Optional
 
 
 class User(BaseModel):
@@ -13,10 +11,10 @@ class User(BaseModel):
 
 
 class UserCreate(BaseModel):
-    name: str
-    surname: str
-    email: str
-    password: str
+    name: str = Field(..., min_length=2, max_length=50)
+    surname: str = Field(..., min_length=2, max_length=50)
+    email: EmailStr
+    password: str = Field(..., min_length=6, max_length=100)
 
 
 class Token(BaseModel):

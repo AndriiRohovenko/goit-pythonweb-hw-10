@@ -1,15 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import extract, and_, or_, select
-from datetime import date, timedelta
+from sqlalchemy import select
 from src.db.models import User
 from src.schemas.auth import UserCreate
-import bcrypt
-
-
-def hash_password(password: str) -> str:
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
-    return hashed.decode("utf-8")
 
 
 class UserRepository:
@@ -35,13 +27,13 @@ class UserRepository:
         result = await self.db.execute(select(User).filter(User.email == email))
         return result.scalar_one_or_none()
 
-    async def create(self, body: UserCreate):
+    async def create(self, body: UserCreate, avatar: str = None):
         from src.api.utils import hash_password
 
         hashed_password = hash_password(body.password)
         user_data = body.model_dump(exclude={"password"})
 
-        new_user = User(**user_data, hashed_password=hashed_password)
+        new_user = User(**user_data, hashed_password=hashed_password, avatar=avatar)
         self.db.add(new_user)
         await self.db.commit()
         await self.db.refresh(new_user)
@@ -60,6 +52,13 @@ class UserRepository:
 
     async def confirm_email(self, user: User):
         user.is_verified = True
+        await self.db.commit()
+        await self.db.refresh(user)
+        return user
+
+    async def update_avatar_url(self, email: str, url: str) -> User:
+        user = await self.get_by_email(email)
+        user.avatar = url
         await self.db.commit()
         await self.db.refresh(user)
         return user

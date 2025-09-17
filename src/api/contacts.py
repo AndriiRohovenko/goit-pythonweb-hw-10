@@ -7,7 +7,6 @@ from src.services.auth import get_current_user
 from src.services.contacts import ContactService
 from src.repository.contacts import ContactsRepository
 
-from src.schemas.error import ErrorResponse
 
 router = APIRouter(prefix="/contacts", tags=["contacts"])
 
@@ -20,6 +19,7 @@ async def contact_service(db: AsyncSession = Depends(get_db_session)):
 @router.get(
     "/",
     response_model=list[ContactSchema],
+    status_code=status.HTTP_200_OK,
 )
 async def get_contacts(
     skip: int = 0,
@@ -45,6 +45,7 @@ async def create_contact(
 @router.get(
     "/{contact_id}",
     response_model=ContactSchema,
+    status_code=status.HTTP_200_OK,
 )
 async def get_contact(
     contact_id: int,
@@ -82,6 +83,7 @@ async def delete_contact(
 @router.get(
     "/search/",
     response_model=list[ContactSchema],
+    status_code=status.HTTP_200_OK,
 )
 async def search_contacts(
     name: str | None = Query(None, description="Filter by name"),
@@ -96,6 +98,7 @@ async def search_contacts(
 @router.get(
     "/upcoming-birthdays/",
     response_model=list[ContactSchema],
+    status_code=status.HTTP_200_OK,
 )
 async def get_upcoming_birthdays(
     service: ContactService = Depends(contact_service),
