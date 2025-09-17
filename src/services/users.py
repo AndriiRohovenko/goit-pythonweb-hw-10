@@ -44,7 +44,9 @@ class UserService:
         if await self.repo.get_by_email(data.email):
             raise DuplicateEmailError
         try:
-            return await self.repo.create(data)
+            g = Gravatar(data.email)
+            avatar = g.get_image()
+            return await self.repo.create(data, avatar=avatar)
         except Exception as e:
             raise ServerError(str(e))
 
@@ -82,3 +84,6 @@ class UserService:
             return await self.repo.confirm_email(existing)
         except Exception as e:
             raise ServerError(str(e))
+
+    async def update_avatar_url(self, email: str, url: str):
+        return await self.repo.update_avatar_url(email, url)

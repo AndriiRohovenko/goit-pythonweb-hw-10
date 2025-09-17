@@ -17,7 +17,14 @@ class UserSchema(BaseModel):
         example="john.doe@example.com",
     )
 
-    # Allow creating this schema from SQLAlchemy model instances
     model_config = {
         "from_attributes": True,
     }
+
+
+class UserUploadAvatarSchema(BaseModel):
+    avatar: Optional[str] = Field(
+        None,
+        description="URL of the user's avatar image",
+        example="https://example.com/avatars/johndoe.jpg",
+    )

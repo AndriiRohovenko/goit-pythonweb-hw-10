@@ -20,6 +20,7 @@ class User(Base):
     created_at = Column(DateTime, default=func.now())
     refresh_token: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     is_verified: Mapped[bool] = mapped_column(default=False)
+    avatar: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
 
 class Contacts(Base):
