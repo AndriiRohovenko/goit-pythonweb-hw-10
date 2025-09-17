@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,6 +7,9 @@ from src.services.users import UserService
 from src.repository.users import UserRepository
 from src.db.configurations import get_db_session as get_db
 from src.schemas.auth import UserCreate, Token, User, RefreshTokenRequest
+from src.conf.config import config
+
+from src.services.email import send_verification_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -18,7 +21,9 @@ async def user_service(db: AsyncSession = Depends(get_db)):
 
 @router.post("/signup", response_model=User, status_code=status.HTTP_201_CREATED)
 async def register_user(
-    user_data: UserCreate, user_service: UserService = Depends(user_service)
+    user_data: UserCreate,
+    background_tasks: BackgroundTasks,
+    user_service: UserService = Depends(user_service),
 ):
     email_user = await user_service.get_user_by_email(user_data.email)
     if email_user:
@@ -26,10 +31,16 @@ async def register_user(
             status_code=status.HTTP_409_CONFLICT,
             detail="User with this email already exists",
         )
-    access_token = await create_access_token(
-        data={"sub": user_data.email}, expires_delta=24 * 3600
+    token = await create_access_token(
+        data={"sub": user_data.email},
+        expires_delta=24 * config.JWT_EXPIRATION_SECONDS,
     )
-    return await user_service.create_user(user_data, access_token=access_token)
+
+    background_tasks.add_task(
+        send_verification_email, user_data.email, token, user_info=user_data
+    )
+
+    return await user_service.create_user(user_data)
 
 
 @router.post("/login", response_model=Token)
@@ -43,6 +54,12 @@ async def login_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email not verified",
         )
 
     access_token = await create_access_token(data={"sub": user.email})
@@ -96,6 +113,11 @@ async def verify_email(token: str, user_service: UserService = Depends(user_serv
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+
+    if user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already verified"
         )
 
     await user_service.verify_email(user)

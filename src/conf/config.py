@@ -29,7 +29,7 @@ class BaseConfig(BaseSettings):
     SMTP_PORT: int
     SMTP_USER: str
     SMTP_PASSWORD: str
-    # SMTP_FROM: str
+    SMTP_FROM: str
 
     model_config = ConfigDict(env_file=".env", env_file_encoding="utf-8")
 

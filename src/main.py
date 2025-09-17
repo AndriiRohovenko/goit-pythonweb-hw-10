@@ -8,7 +8,7 @@ from src.api.utils import router as utils_router
 from src.api.auth import router as auth_router
 from src.api.contacts import router as contacts_router
 import time
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -43,6 +43,11 @@ async def add_process_time_header(request: Request, call_next):
     process_time = time.time() - start_time
     response.headers["X-Process-Time"] = str(process_time)
     return response
+
+
+@app.get("/")
+def read_root():
+    return {"message": "Hello from FastAPI! Read the docs at /docs"}
 
 
 app.add_exception_handler(UserNotFoundError, user_not_found_handler)

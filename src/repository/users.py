@@ -57,3 +57,9 @@ class UserRepository:
     async def delete(self, user: User):
         await self.db.delete(user)
         await self.db.commit()
+
+    async def confirm_email(self, user: User):
+        user.is_verified = True
+        await self.db.commit()
+        await self.db.refresh(user)
+        return user
