@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
-from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.services.auth import create_access_token, Hash, get_current_user
+from src.services.auth import create_access_token, Hash
 from src.services.users import UserService
 from src.repository.users import UserRepository
 from src.db.configurations import get_db_session as get_db
@@ -21,29 +20,29 @@ async def user_service(db: AsyncSession = Depends(get_db)):
 
 @router.post("/signup", response_model=User, status_code=status.HTTP_201_CREATED)
 async def register_user(
-    user_data: UserCreate,
+    body: UserCreate,
     background_tasks: BackgroundTasks,
     user_service: UserService = Depends(user_service),
 ):
-    email_user = await user_service.get_user_by_email(user_data.email)
+    email_user = await user_service.get_user_by_email(body.email)
     if email_user:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="User with this email already exists",
         )
     token = await create_access_token(
-        data={"sub": user_data.email},
+        data={"sub": body.email},
         expires_delta=24 * config.JWT_EXPIRATION_SECONDS,
     )
 
     background_tasks.add_task(
-        send_verification_email, user_data.email, token, user_info=user_data
+        send_verification_email, body.email, token, user_info=body
     )
 
-    return await user_service.create_user(user_data)
+    return await user_service.create_user(body)
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=Token, status_code=status.HTTP_200_OK)
 async def login_user(
     form_data: OAuth2PasswordRequestForm = Depends(),
     user_service: UserService = Depends(user_service),
@@ -66,7 +65,6 @@ async def login_user(
     refresh_token = await create_access_token(
         data={"sub": user.email}, expires_delta=7 * 24 * 3600
     )  # 7 days
-    # save refresh_token in DB for user
     await user_service.update_refresh_token(user, refresh_token)
     return {
         "access_token": access_token,
@@ -75,22 +73,20 @@ async def login_user(
     }
 
 
-@router.post("/refresh", response_model=Token)
+@router.post("/refresh", response_model=Token, status_code=status.HTTP_200_OK)
 async def refresh_token(
     body: RefreshTokenRequest,
     user_service: UserService = Depends(user_service),
 ):
-    print(body.refresh_token)
     if body.refresh_token is None:
         raise HTTPException(status_code=400, detail="Refresh token is required")
     user = await user_service.get_user_by_refresh_token(body.refresh_token)
-    print(user)
 
     if not user or user is None:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
     db_refresh_token = await user_service.get_refresh_token(user)
-    print(db_refresh_token)
+
     if db_refresh_token != body.refresh_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -108,7 +104,6 @@ async def refresh_token(
 
 @router.get("/verify-email", status_code=status.HTTP_200_OK)
 async def verify_email(token: str, user_service: UserService = Depends(user_service)):
-    print(token)
     user = await user_service.get_user_by_email_verification_token(token)
     if not user:
         raise HTTPException(

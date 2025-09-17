@@ -4,7 +4,7 @@ from src.api.exceptions import UserNotFoundError, DuplicateEmailError, ServerErr
 from src.schemas.auth import UserCreate
 
 from libgravatar import Gravatar
-from jose import JWTError, jwt
+from jose import jwt
 
 from src.conf.config import config
 

@@ -1,10 +1,7 @@
 from fastapi import (
     APIRouter,
     Depends,
-    HTTPException,
     status,
-    Query,
-    Path,
     Request,
     UploadFile,
     File,
@@ -12,7 +9,7 @@ from fastapi import (
 from src.db.configurations import get_db_session
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.schemas.users import UserSchema, UserUploadAvatarSchema
+from src.schemas.users import UserUploadAvatarResponceSchema
 from src.schemas.auth import User
 from src.services.auth import get_current_user
 from src.services.users import UserService
@@ -36,7 +33,9 @@ async def me(request: Request, user: User = Depends(get_current_user)):
 
 
 @router.patch(
-    "/avatar", status_code=status.HTTP_200_OK, response_model=UserUploadAvatarSchema
+    "/avatar",
+    status_code=status.HTTP_200_OK,
+    response_model=UserUploadAvatarResponceSchema,
 )
 async def update_user_avatar(
     file: UploadFile = File(),

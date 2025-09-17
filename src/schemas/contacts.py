@@ -1,8 +1,5 @@
-# give contacts schema
-
 from pydantic import BaseModel, Field, EmailStr
-from typing import Optional
-from datetime import datetime, date
+from datetime import date
 
 
 class ContactSchema(BaseModel):
@@ -18,7 +15,6 @@ class ContactSchema(BaseModel):
         ..., description="User's birthdate in YYYY-MM-DD format", example="1990-01-01"
     )
 
-    # Allow creating this schema from SQLAlchemy model instances
     model_config = {
         "from_attributes": True,
     }

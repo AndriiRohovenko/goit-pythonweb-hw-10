@@ -1,7 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Request
-from src.db.configurations import get_db_session
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from src.api.users import router as users_router
 from src.api.utils import router as utils_router
@@ -10,7 +7,6 @@ from src.api.contacts import router as contacts_router
 import time
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.middleware import SlowAPIMiddleware
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from src.conf.limiter import limiter
 

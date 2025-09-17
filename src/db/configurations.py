@@ -26,12 +26,11 @@ class DatabaseSessionManager:
             yield session
         except SQLAlchemyError as e:
             await session.rollback()
-            raise  # Re-raise the original error
+            raise
         finally:
             await session.close()
 
 
-print(f"debug: {config.db_url()}")
 sessionmanager = DatabaseSessionManager(config.db_url())
 
 

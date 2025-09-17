@@ -1,15 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import extract, and_, or_, select
-from datetime import date, timedelta
+from sqlalchemy import select
 from src.db.models import User
 from src.schemas.auth import UserCreate
-import bcrypt
-
-
-def hash_password(password: str) -> str:
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
-    return hashed.decode("utf-8")
 
 
 class UserRepository:

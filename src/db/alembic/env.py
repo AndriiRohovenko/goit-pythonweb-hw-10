@@ -7,20 +7,19 @@ from alembic import context
 from dotenv import load_dotenv
 import os
 import asyncio
-from sqlalchemy.ext.asyncio import AsyncEngine, async_engine_from_config
+from sqlalchemy.ext.asyncio import async_engine_from_config
 from src.conf.config import config as app_config
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 load_dotenv()
-print(f"APP_ENV: {os.getenv('APP_ENV')}")
-env_file = ".env" if os.getenv("APP_ENV") == "prod" else ".env.dev"
 
+env_file = ".env" if os.getenv("APP_ENV") == "prod" else ".env.dev"
 
 # db_url = os.getenv("ALEMBIC_DB_URL")
 db_url = app_config.db_url()
-print(f"db_url from env: {app_config.db_url()}")
+
 
 if db_url:
     config.set_main_option("sqlalchemy.url", db_url)

@@ -17,7 +17,7 @@ class User(Base):
     surname: Mapped[str] = mapped_column(String(50), nullable=False)
     email: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
-    created_at = Column(DateTime, default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
     refresh_token: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     is_verified: Mapped[bool] = mapped_column(default=False)
     avatar: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
@@ -31,10 +31,10 @@ class Contacts(Base):
     email: Mapped[str] = mapped_column(String(100), nullable=False)
     phone: Mapped[str] = mapped_column(String(20), nullable=False)
     birthdate: Mapped[date | None] = mapped_column(Date, nullable=False)
-    avatar = Column(String(255), nullable=True)
-    created_at = Column(DateTime, default=func.now())
+    avatar: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
 
-    user_id = Column(
+    user_id: Mapped[int | None] = mapped_column(
         "user_id", ForeignKey("users.id", ondelete="CASCADE"), default=None
     )
-    user = relationship("User", backref="contacts")
+    user: Mapped["User"] = relationship("User", backref="contacts")
