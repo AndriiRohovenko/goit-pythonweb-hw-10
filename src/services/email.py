@@ -21,7 +21,6 @@ conf = ConnectionConfig(
 
 
 async def send_verification_email(email: EmailStr, access_token: str, user_info: dict):
-    print(f"Sending verification email to {email}")
     fullname = f"{user_info.name} {user_info.surname}"
     message = MessageSchema(
         subject="Verify your email",

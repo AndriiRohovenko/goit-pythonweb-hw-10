@@ -41,7 +41,7 @@ async def add_process_time_header(request: Request, call_next):
     return response
 
 
-@app.get("/")
+@app.get("/", include_in_schema=False)
 def read_root():
     return {"message": "Hello from FastAPI! Read the docs at /docs"}
 
